@@ -1,2 +1,2 @@
 # New-repository
-Index.html
+index.html
