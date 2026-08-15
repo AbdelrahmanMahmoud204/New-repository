@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>دفتر مصاريف البيت</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="دفتر مصاريف">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#16423C">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%2316423C'/%3E%3Ctext x='90' y='118' font-size='90' text-anchor='middle'%3E%F0%9F%93%92%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1E6C9;
+    --paper-dark:#E6D8B0;
+    --ink:#233A34;
+    --ledger:#16423C;
+    --ledger-light:#1F5A50;
+    --brass:#B4863B;
+    --brass-light:#D9AE63;
+    --red-ink:#8C3B34;
+    --green-ink:#2F6B4F;
+    --line:#c9b98a;
+    --shadow: 0 6px 18px rgba(22,66,60,0.15);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(180,134,59,0.08), transparent 40%),
+      var(--paper);
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:calc(60px + env(safe-area-inset-bottom));
+    padding-top:env(safe-area-inset-top);
+  }
+  .binding{
+    position:fixed;
+    top:0; right:0; bottom:0;
+    width:26px;
+    background: repeating-linear-gradient(180deg, var(--ledger), var(--ledger) 22px, var(--ledger-light) 22px, var(--ledger-light) 26px);
+    box-shadow: -4px 0 10px rgba(0,0,0,0.15);
+    z-index:5;
+  }
+  .binding::before{
+    content:'';
+    position:absolute;
+    right:8px; top:0; bottom:0;
+    width:2px;
+    background: repeating-linear-gradient(180deg, var(--brass-light) 0 10px, transparent 10px 26px);
+    opacity:0.6;
+  }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:28px 34px 28px 20px;
+    margin-right:26px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:22px;
+    padding-bottom:16px;
+    border-bottom:3px double var(--brass);
+    position:relative;
+  }
+  header h1{
+    font-family:'Cairo',sans-serif;
+    font-weight:800;
+    font-size:2rem;
+    color:var(--ledger);
+    margin:0 0 4px;
+    letter-spacing:0.5px;
+  }
+  header .sub{
+    color:var(--brass);
+    font-weight:600;
+    font-size:0.9rem;
+  }
+  .month-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .month-row select{
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    font-weight:600;
+    font-size:0.95rem;
+    padding:8px 14px;
+    border-radius:8px;
+    border:1.5px solid var(--brass);
+    background:var(--paper-dark);
+    color:var(--ledger);
+  }
+  .balance-banner{
+    background: linear-gradient(135deg, var(--ledger), var(--ledger-light));
+    border-radius:14px;
+    padding:22px 18px;
+    text-align:center;
+    margin-bottom:18px;
+    box-shadow: var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .balance-banner::before{
+    content:'';
+    position:absolute; inset:6px;
+    border:1px dashed rgba(217,174,99,0.35);
+    border-radius:10px;
+    pointer-events:none;
+  }
+  .balance-banner .lbl{
+    color:var(--brass-light);
+    font-weight:600;
+    font-size:0.85rem;
+    margin-bottom:6px;
+  }
+  .balance-banner .val{
+    font-family:'Cairo',sans-serif;
+    font-weight:800;
+    font-size:2rem;
+    color:#fffdf0;
+    margin-bottom:10px;
+  }
+  .edit-balance-btn{
+    background:rgba(255,253,240,0.12);
+    border:1.5px solid rgba(217,174,99,0.5);
+    color:var(--brass-light);
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:6px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .edit-balance-btn:hover{background:rgba(255,253,240,0.22);}
+  .backup-row{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .backup-btn{
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    font-size:0.78rem;
+    font-weight:600;
+    padding:7px 14px;
+    border-radius:20px;
+    border:1.5px solid var(--brass);
+    background:transparent;
+    color:var(--ledger);
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .backup-btn:hover{background:var(--paper-dark);}
+
+  .stamp-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:26px;
+  }
+  .stamp{
+    background:var(--paper-dark);
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:14px 10px;
+    text-align:center;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .stamp::after{
+    content:'';
+    position:absolute; inset:5px;
+    border:1px dashed rgba(22,66,60,0.15);
+    border-radius:6px;
+    pointer-events:none;
+  }
+  .stamp .lbl{font-size:0.78rem;color:var(--ledger);opacity:0.75;font-weight:600;margin-bottom:4px;}
+  .stamp .val{font-family:'Cairo',sans-serif;font-weight:800;font-size:1.25rem;}
+  .stamp.income .val{color:var(--green-ink);}
+  .stamp.expense .val{color:var(--red-ink);}
+  .stamp.net .val{color:var(--ledger);}
+
+  .card{
+    background:rgba(255,252,240,0.55);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:22px;
+    box-shadow:var(--shadow);
+  }
+  .card h2{
+    font-family:'Cairo',sans-serif;
+    font-size:1.05rem;
+    color:var(--ledger);
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card h2::before{
+    content:'';
+    width:6px;height:6px;
+    background:var(--brass);
+    border-radius:50%;
+  }
+  .type-toggle{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .type-toggle button{
+    flex:1;
+    padding:10px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    background:transparent;
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--ink);
+    transition:all .15s;
+  }
+  .type-toggle button.active[data-type="income"]{background:var(--green-ink);color:#fff;border-color:var(--green-ink);}
+  .type-toggle button.active[data-type="expense"]{background:var(--red-ink);color:#fff;border-color:var(--red-ink);}
+
+  .form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .form-grid .full{grid-column:1/-1;}
+  label{font-size:0.78rem;color:var(--ledger);font-weight:600;margin-bottom:4px;display:block;}
+  input,select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1.5px solid var(--line);
+    background:#fffdf6;
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    font-size:0.92rem;
+    color:var(--ink);
+  }
+  input:focus,select:focus{outline:2px solid var(--brass);outline-offset:1px;}
+  .add-btn{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:var(--ledger);
+    color:#fffdf0;
+    font-family:'Cairo',sans-serif;
+    font-weight:700;
+    font-size:0.95rem;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .add-btn:hover{background:var(--ledger-light);}
+
+  .conv-rate-line{
+    font-size:0.82rem;
+    color:var(--brass);
+    font-weight:600;
+    margin-bottom:12px;
+    background:var(--paper-dark);
+    padding:8px 12px;
+    border-radius:8px;
+    text-align:center;
+  }
+  .conv-result{
+    font-family:'Cairo',sans-serif;
+    font-weight:800;
+    font-size:1.05rem;
+    color:var(--ledger);
+    text-align:center;
+    min-height:1.4em;
+    margin-top:4px;
+  }
+
+  .manual-rate-box{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px dashed var(--line);
+  }
+  .manual-rate-box label{margin-bottom:6px;}
+  .manual-rate-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .manual-rate-row input{flex:1;}
+  .manual-rate-row .backup-btn{white-space:nowrap;flex-shrink:0;}
+
+  .cat-bars{display:flex;flex-direction:column;gap:10px;}
+  .cat-bar-row{display:flex;align-items:center;gap:10px;}
+  .cat-bar-row .cname{font-size:0.85rem;width:90px;flex-shrink:0;font-weight:600;}
+  .cat-bar-track{flex:1;height:10px;background:var(--paper-dark);border-radius:6px;overflow:hidden;}
+  .cat-bar-fill{height:100%;background:linear-gradient(90deg,var(--brass),var(--brass-light));border-radius:6px;}
+  .cat-bar-row .camt{font-size:0.8rem;font-weight:700;color:var(--ledger);width:70px;text-align:left;flex-shrink:0;}
+
+  .tx-list{display:flex;flex-direction:column;gap:0;}
+  .tx-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:11px 4px;
+    border-bottom:1px dashed var(--line);
+    gap:8px;
+  }
+  .tx-row:last-child{border-bottom:none;}
+  .tx-left{display:flex;align-items:center;gap:10px;min-width:0;}
+  .tx-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .tx-dot.income{background:var(--green-ink);}
+  .tx-dot.expense{background:var(--red-ink);}
+  .tx-info .desc{font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;}
+  .tx-info .meta{font-size:0.75rem;color:#6b6350;}
+  .tx-amt{font-family:'Cairo',sans-serif;font-weight:800;font-size:0.95rem;flex-shrink:0;}
+  .tx-amt.income{color:var(--green-ink);}
+  .tx-amt.expense{color:var(--red-ink);}
+  .del-btn{
+    background:none;border:none;color:#a06b5b;cursor:pointer;font-size:1rem;padding:2px 6px;flex-shrink:0;
+    opacity:0.55;
+  }
+  .del-btn:hover{opacity:1;}
+  .empty{
+    text-align:center;
+    padding:28px 10px;
+    color:#8a7f60;
+    font-size:0.9rem;
+  }
+  .loading{text-align:center;padding:40px;color:var(--ledger);font-weight:600;}
+  @media (max-width:480px){
+    .wrap{padding:20px 20px 20px 14px;margin-right:18px;}
+    .stamp-row{grid-template-columns:1fr 1fr;}
+    .stamp-row .net{grid-column:1/-1;}
+    header h1{font-size:1.5rem;}
+    .tx-info .desc{max-width:130px;}
+  }
+</style>
+</head>
+<body>
+<div class="binding"></div>
+<div class="wrap">
+  <header>
+    <h1>📒 دفتر مصاريف البيت</h1>
+    <div class="sub">تابع دخلك ومصاريفك واعرف بتحوش كام كل شهر</div>
+    <div class="month-row">
+      <select id="monthSelect"></select>
+      <select id="currencySelect"></select>
+    </div>
+    <div class="backup-row">
+      <button id="exportBtn" class="backup-btn">⬇ تصدير نسخة احتياطية</button>
+      <button id="importBtn" class="backup-btn">⬆ استيراد نسخة</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+  </header>
+
+  <div id="app">
+    <div class="loading">بنفتح الدفتر...</div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  {id:'akl', name:'أكل وشرب'},
+  {id:'bills', name:'فواتير'},
+  {id:'muwasalat', name:'مواصلات'},
+  {id:'iggar', name:'إيجار/قسط'},
+  {id:'sehha', name:'صحة'},
+  {id:'taalim', name:'تعليم'},
+  {id:'tarfih', name:'ترفيه'},
+  {id:'tania', name:'حاجات تانية'},
+];
+
+const CURRENCIES = [
+  {id:'EGP', name:'جنيه مصري', symbol:'ج.م'},
+  {id:'KWD', name:'دينار كويتي', symbol:'د.ك'},
+  {id:'SAR', name:'ريال سعودي', symbol:'ر.س'},
+  {id:'AED', name:'درهم إماراتي', symbol:'د.إ'},
+  {id:'USD', name:'دولار أمريكي', symbol:'$'},
+  {id:'EUR', name:'يورو', symbol:'€'},
+  {id:'QAR', name:'ريال قطري', symbol:'ر.ق'},
+  {id:'BHD', name:'دينار بحريني', symbol:'د.ب'},
+  {id:'OMR', name:'ريال عماني', symbol:'ر.ع'},
+  {id:'JOD', name:'دينار أردني', symbol:'د.أ'},
+];
+
+let transactions = [];
+let currentType = 'expense';
+let currentMonth = new Date().toISOString().slice(0,7); // YYYY-MM
+let currentCurrency = 'EGP';
+let initialBalance = 0;
+
+function fmt(n){
+  const cur = CURRENCIES.find(c=>c.id===currentCurrency) || CURRENCIES[0];
+  return Number(n).toLocaleString('ar-EG', {maximumFractionDigits:0}) + ' ' + cur.symbol;
+}
+
+function populateCurrency(){
+  const sel = document.getElementById('currencySelect');
+  sel.innerHTML = CURRENCIES.map(c => `<option value="${c.id}" ${c.id===currentCurrency?'selected':''}>${c.name}</option>`).join('');
+  sel.onchange = async () => {
+    currentCurrency = sel.value;
+    await saveCurrency();
+    render();
+    populateCurrency();
+  };
+}
+
+async function loadCurrency(){
+  try{
+    const val = localStorage.getItem('household-currency');
+    if(val) currentCurrency = val;
+  }catch(e){
+    currentCurrency = 'EGP';
+  }
+}
+
+async function saveCurrency(){
+  try{
+    localStorage.setItem('household-currency', currentCurrency);
+  }catch(e){
+    console.error('تعذر حفظ العملة', e);
+  }
+}
+
+async function loadInitialBalance(){
+  try{
+    const val = localStorage.getItem('household-initial-balance');
+    if(val) initialBalance = parseFloat(val) || 0;
+  }catch(e){
+    initialBalance = 0;
+  }
+}
+
+async function saveInitialBalance(){
+  try{
+    localStorage.setItem('household-initial-balance', String(initialBalance));
+  }catch(e){
+    console.error('تعذر حفظ الرصيد', e);
+  }
+}
+
+function monthLabel(ym){
+  const [y,m] = ym.split('-');
+  const names = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  return names[parseInt(m,10)-1] + ' ' + y;
+}
+
+function populateMonths(){
+  const sel = document.getElementById('monthSelect');
+  const months = new Set(transactions.map(t=>t.date.slice(0,7)));
+  months.add(currentMonth);
+  const sorted = Array.from(months).sort().reverse();
+  sel.innerHTML = sorted.map(m => `<option value="${m}" ${m===currentMonth?'selected':''}>${monthLabel(m)}</option>`).join('');
+  sel.onchange = () => { currentMonth = sel.value; render(); };
+}
+
+async function loadData(){
+  try{
+    const val = localStorage.getItem('household-transactions');
+    transactions = val ? JSON.parse(val) : [];
+  }catch(e){
+    transactions = [];
+  }
+}
+
+async function saveData(){
+  try{
+    localStorage.setItem('household-transactions', JSON.stringify(transactions));
+  }catch(e){
+    console.error('تعذر الحفظ', e);
+  }
+}
+
+function exportBackup(){
+  const data = {
+    transactions,
+    initialBalance,
+    currency: currentCurrency,
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `نسخة-احتياطية-دفتر-مصاريف-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data.transactions)) throw new Error('صيغة غير صحيحة');
+      const confirmMsg = 'هيتم استبدال كل البيانات الحالية بالنسخة دي. متأكد؟';
+      if(!confirm(confirmMsg)) return;
+      transactions = data.transactions;
+      initialBalance = typeof data.initialBalance === 'number' ? data.initialBalance : 0;
+      currentCurrency = data.currency || 'EGP';
+      await saveData();
+      await saveInitialBalance();
+      await saveCurrency();
+      populateMonths();
+      populateCurrency();
+      render();
+      alert('تم استيراد النسخة الاحتياطية بنجاح ✅');
+    }catch(err){
+      alert('الملف ده مش نسخة احتياطية صحيحة');
+    }
+  };
+  reader.readAsText(file);
+}
+
+let ratesCache = null; // { base, rates:{...}, fetchedAt }
+
+async function fetchRates(forceRefresh){
+  const lineEl = document.getElementById('convRateLine');
+  if(!forceRefresh){
+    try{
+      const cached = localStorage.getItem('household-rates-cache');
+      if(cached){
+        const parsed = JSON.parse(cached);
+        const ageHours = (Date.now() - parsed.fetchedAt) / 3600000;
+        if(ageHours < 12){
+          ratesCache = parsed;
+          updateConverter();
+          return;
+        }
+      }
+    }catch(e){}
+  }
+  if(lineEl) lineEl.textContent = 'بنحدّث سعر الصرف...';
+  try{
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await res.json();
+    if(data && data.result === 'success' && data.rates){
+      ratesCache = { base:'USD', rates:data.rates, fetchedAt: Date.now() };
+      localStorage.setItem('household-rates-cache', JSON.stringify(ratesCache));
+    }else{
+      throw new Error('bad response');
+    }
+  }catch(e){
+    if(lineEl && !ratesCache) lineEl.textContent = 'تعذر جلب سعر الصرف (تأكد إن عندك إنترنت)';
+  }
+  updateConverter();
+}
+
+let manualRate = null; // { from, to, rate, savedAt }
+
+function loadManualRate(){
+  try{
+    const val = localStorage.getItem('household-manual-rate');
+    manualRate = val ? JSON.parse(val) : null;
+  }catch(e){
+    manualRate = null;
+  }
+}
+
+function saveManualRate(from, to, rate){
+  manualRate = { from, to, rate, savedAt: Date.now() };
+  try{
+    localStorage.setItem('household-manual-rate', JSON.stringify(manualRate));
+  }catch(e){}
+}
+
+function clearManualRate(){
+  manualRate = null;
+  try{ localStorage.removeItem('household-manual-rate'); }catch(e){}
+}
+
+function getRate(fromId, toId){
+  if(manualRate){
+    if(manualRate.from === fromId && manualRate.to === toId) return manualRate.rate;
+    if(manualRate.from === toId && manualRate.to === fromId) return 1 / manualRate.rate;
+  }
+  if(!ratesCache || !ratesCache.rates) return null;
+  const rFrom = ratesCache.rates[fromId];
+  const rTo = ratesCache.rates[toId];
+  if(!rFrom || !rTo) return null;
+  // rates are relative to USD base: value_in_X = amount / rFrom * rTo
+  return rTo / rFrom;
+}
+
+function updateConverter(){
+  const fromEl = document.getElementById('convFrom');
+  const toEl = document.getElementById('convTo');
+  const amtEl = document.getElementById('convAmt');
+  const resultEl = document.getElementById('convResult');
+  const lineEl = document.getElementById('convRateLine');
+  if(!fromEl || !toEl) return;
+
+  const fromId = fromEl.value;
+  const toId = toEl.value;
+  const fromSym = (CURRENCIES.find(c=>c.id===fromId)||{}).symbol || '';
+  const toSym = (CURRENCIES.find(c=>c.id===toId)||{}).symbol || '';
+  const rate = getRate(fromId, toId);
+
+  if(rate === null){
+    if(lineEl) lineEl.textContent = ratesCache ? 'العملة دي مش متاحة دلوقتي' : 'بنجيب سعر الصرف...';
+    if(resultEl) resultEl.textContent = '';
+    return;
+  }
+
+  const isManual = manualRate && (
+    (manualRate.from === fromId && manualRate.to === toId) ||
+    (manualRate.from === toId && manualRate.to === fromId)
+  );
+
+  if(lineEl){
+    if(isManual){
+      lineEl.textContent = `1 ${fromSym} = ${rate.toLocaleString('ar-EG',{maximumFractionDigits:4})} ${toSym} (سعر يدوي من الملا)`;
+    }else{
+      const ago = ratesCache && ratesCache.fetchedAt ? Math.round((Date.now()-ratesCache.fetchedAt)/3600000) : null;
+      lineEl.textContent = `1 ${fromSym} = ${rate.toLocaleString('ar-EG',{maximumFractionDigits:4})} ${toSym}` + (ago!==null ? ` (محدّث من ${ago} ساعة)` : '');
+    }
+  }
+
+  const manualRateInput = document.getElementById('manualRateInput');
+  if(manualRateInput && document.activeElement !== manualRateInput){
+    manualRateInput.value = isManual ? manualRate.rate : '';
+  }
+  const manualRateLbl = document.getElementById('manualRateLbl');
+  if(manualRateLbl) manualRateLbl.textContent = `1 ${fromSym} = كام ${toSym}؟`;
+  const clearManualBtn = document.getElementById('clearManualBtn');
+  if(clearManualBtn) clearManualBtn.style.display = isManual ? 'inline-block' : 'none';
+
+  const amt = parseFloat(amtEl.value);
+  if(resultEl){
+    if(!isNaN(amt) && amt > 0){
+      resultEl.textContent = `${amt.toLocaleString('ar-EG')} ${fromSym} = ${(amt*rate).toLocaleString('ar-EG',{maximumFractionDigits:2})} ${toSym}`;
+    }else{
+      resultEl.textContent = '';
+    }
+  }
+}
+
+function renderApp(){
+  const app = document.getElementById('app');
+  const curSymbol = (CURRENCIES.find(c=>c.id===currentCurrency)||CURRENCIES[0]).symbol;
+  app.innerHTML = `
+    <div class="balance-banner">
+      <div class="lbl">رصيدك الحالي دلوقتي</div>
+      <div class="val" id="overallBalance">0</div>
+      <button class="edit-balance-btn" id="editBalanceBtn">تعديل الرصيد الابتدائي</button>
+    </div>
+
+    <div class="stamp-row">
+      <div class="stamp income"><div class="lbl">دخل الشهر</div><div class="val" id="totalIncome">0</div></div>
+      <div class="stamp expense"><div class="lbl">مصروفات الشهر</div><div class="val" id="totalExpense">0</div></div>
+      <div class="stamp net"><div class="lbl">وفرت الشهر ده</div><div class="val" id="netSave">0</div></div>
+    </div>
+
+    <div class="card">
+      <h2>إضافة عملية</h2>
+      <div class="type-toggle">
+        <button data-type="income" id="btnIncome">دخل ⬆</button>
+        <button data-type="expense" id="btnExpense">مصروف ⬇</button>
+      </div>
+      <div class="form-grid">
+        <div class="full">
+          <label>الوصف</label>
+          <input id="descInput" type="text" placeholder="مثلاً: راتب الشهر / فاتورة كهرباء">
+        </div>
+        <div>
+          <label>المبلغ (${curSymbol})</label>
+          <input id="amtInput" type="number" min="0" step="0.01" placeholder="0">
+        </div>
+        <div id="catWrap">
+          <label>الفئة</label>
+          <select id="catInput">
+            ${CATEGORIES.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="full">
+          <label>التاريخ</label>
+          <input id="dateInput" type="date">
+        </div>
+      </div>
+      <button class="add-btn" id="addBtn">إضافة للدفتر</button>
+    </div>
+
+    <div class="card">
+      <h2>محوّل العملات</h2>
+      <div class="conv-rate-line" id="convRateLine">بنجيب سعر الصرف...</div>
+      <div class="form-grid">
+        <div>
+          <label>من</label>
+          <select id="convFrom">
+            ${CURRENCIES.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label>إلى</label>
+          <select id="convTo">
+            ${CURRENCIES.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="full">
+          <label>المبلغ</label>
+          <input id="convAmt" type="number" min="0" step="0.01" placeholder="مثلاً: 100">
+        </div>
+      </div>
+      <div class="conv-result" id="convResult"></div>
+      <div class="manual-rate-box">
+        <label id="manualRateLbl">سعر يدوي (مثلاً من الملا للصرافة)</label>
+        <div class="manual-rate-row">
+          <input id="manualRateInput" type="number" min="0" step="0.0001" placeholder="اكتب السعر هنا">
+          <button class="backup-btn" id="saveManualBtn">حفظ</button>
+          <button class="backup-btn" id="clearManualBtn" style="display:none;">إلغاء اليدوي</button>
+        </div>
+      </div>
+      <button class="backup-btn" id="convRefreshBtn" style="margin-top:10px;">🔄 تحديث سعر الصرف العام</button>
+    </div>
+
+    <div class="card" id="catCard">
+      <h2>المصروفات حسب الفئة (${monthLabel(currentMonth)})</h2>
+      <div class="cat-bars" id="catBars"></div>
+    </div>
+
+    <div class="card">
+      <h2>حركات ${monthLabel(currentMonth)}</h2>
+      <div class="tx-list" id="txList"></div>
+    </div>
+  `;
+
+  document.getElementById('dateInput').value = new Date().toISOString().slice(0,10);
+  document.getElementById('btnIncome').onclick = () => setType('income');
+  document.getElementById('btnExpense').onclick = () => setType('expense');
+  document.getElementById('addBtn').onclick = addTransaction;
+  document.getElementById('editBalanceBtn').onclick = editInitialBalance;
+  setType(currentType);
+
+  const convFrom = document.getElementById('convFrom');
+  const convTo = document.getElementById('convTo');
+  convFrom.value = currentCurrency;
+  convTo.value = currentCurrency === 'EGP' ? 'KWD' : 'EGP';
+  convFrom.onchange = updateConverter;
+  convTo.onchange = updateConverter;
+  document.getElementById('convAmt').oninput = updateConverter;
+  document.getElementById('convRefreshBtn').onclick = () => fetchRates(true);
+  document.getElementById('saveManualBtn').onclick = () => {
+    const val = parseFloat(document.getElementById('manualRateInput').value);
+    if(isNaN(val) || val <= 0){
+      alert('اكتب سعر صحيح من فضلك');
+      return;
+    }
+    saveManualRate(convFrom.value, convTo.value, val);
+    updateConverter();
+  };
+  document.getElementById('clearManualBtn').onclick = () => {
+    clearManualRate();
+    updateConverter();
+  };
+
+  refreshView();
+  updateConverter();
+}
+
+async function editInitialBalance(){
+  const input = prompt('اكتب المبلغ اللي معاك حالياً (الرصيد الابتدائي):', initialBalance || 0);
+  if(input === null) return;
+  const val = parseFloat(input);
+  if(isNaN(val) || val < 0){
+    alert('اكتب رقم صحيح من فضلك');
+    return;
+  }
+  initialBalance = val;
+  await saveInitialBalance();
+  refreshView();
+}
+
+function setType(type){
+  currentType = type;
+  document.getElementById('btnIncome').classList.toggle('active', type==='income');
+  document.getElementById('btnExpense').classList.toggle('active', type==='expense');
+  document.getElementById('catWrap').style.display = type==='expense' ? 'block' : 'none';
+}
+
+async function addTransaction(){
+  const desc = document.getElementById('descInput').value.trim();
+  const amt = parseFloat(document.getElementById('amtInput').value);
+  const date = document.getElementById('dateInput').value || new Date().toISOString().slice(0,10);
+  const cat = document.getElementById('catInput').value;
+
+  if(!desc || !amt || amt<=0){
+    alert('من فضلك اكتب الوصف والمبلغ صح');
+    return;
+  }
+
+  transactions.push({
+    id: Date.now().toString(),
+    type: currentType,
+    desc, amount: amt, date,
+    category: currentType==='expense' ? cat : null
+  });
+
+  document.getElementById('descInput').value = '';
+  document.getElementById('amtInput').value = '';
+
+  await saveData();
+  currentMonth = date.slice(0,7);
+  populateMonths();
+  refreshView();
+}
+
+async function deleteTransaction(id){
+  transactions = transactions.filter(t => t.id !== id);
+  await saveData();
+  refreshView();
+}
+
+function refreshView(){
+  const allIncome = transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const allExpense = transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const overallBalance = initialBalance + allIncome - allExpense;
+  const overallEl = document.getElementById('overallBalance');
+  if(overallEl) overallEl.textContent = fmt(overallBalance);
+
+  const monthTx = transactions.filter(t => t.date.slice(0,7) === currentMonth);
+  const income = monthTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = monthTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+
+  document.getElementById('totalIncome').textContent = fmt(income);
+  document.getElementById('totalExpense').textContent = fmt(expense);
+  document.getElementById('netSave').textContent = fmt(income-expense);
+
+  // category bars
+  const catTotals = {};
+  monthTx.filter(t=>t.type==='expense').forEach(t=>{
+    catTotals[t.category] = (catTotals[t.category]||0) + t.amount;
+  });
+  const maxCat = Math.max(1, ...Object.values(catTotals));
+  const catBars = document.getElementById('catBars');
+  const entries = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  if(entries.length===0){
+    catBars.innerHTML = `<div class="empty">لسه مفيش مصروفات مسجلة الشهر ده</div>`;
+  }else{
+    catBars.innerHTML = entries.map(([catId,amt])=>{
+      const cname = CATEGORIES.find(c=>c.id===catId)?.name || catId;
+      const pct = Math.round((amt/maxCat)*100);
+      return `<div class="cat-bar-row">
+        <div class="cname">${cname}</div>
+        <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
+        <div class="camt">${fmt(amt)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // tx list
+  const txList = document.getElementById('txList');
+  const sorted = [...monthTx].sort((a,b)=> b.date.localeCompare(a.date) || Number(b.id)-Number(a.id));
+  if(sorted.length===0){
+    txList.innerHTML = `<div class="empty">مفيش حركات لسه — ابدأ تسجل!</div>`;
+  }else{
+    txList.innerHTML = sorted.map(t=>{
+      const cname = t.category ? (CATEGORIES.find(c=>c.id===t.category)?.name || '') : 'دخل';
+      return `<div class="tx-row">
+        <div class="tx-left">
+          <div class="tx-dot ${t.type}"></div>
+          <div class="tx-info">
+            <div class="desc">${escapeHtml(t.desc)}</div>
+            <div class="meta">${cname} · ${t.date}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="tx-amt ${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</div>
+          <button class="del-btn" onclick="deleteTransaction('${t.id}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function render(){
+  renderApp();
+}
+
+async function init(){
+  await loadData();
+  await loadCurrency();
+  await loadInitialBalance();
+  loadManualRate();
+  populateMonths();
+  populateCurrency();
+  render();
+  document.getElementById('exportBtn').onclick = exportBackup;
+  document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange = (e) => {
+    if(e.target.files && e.target.files[0]) importBackup(e.target.files[0]);
+    e.target.value = '';
+  };
+  fetchRates(false);
+}
+
+init();
+</script>
+</body>
+</html>
